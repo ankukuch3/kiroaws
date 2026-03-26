@@ -1,0 +1,20 @@
+{
+  "name": "micro-blogging-app",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "infrastructure"
+  ],
+  "scripts": {
+    "start:frontend": "yarn workspace frontend dev",
+    "build:frontend": "yarn workspace frontend build",
+    "start:backend": "yarn workspace backend start",
+    "build:backend": "yarn workspace backend build",
+    "deploy:infra": "yarn workspace infrastructure deploy",
+    "deploy:frontend": "yarn build:frontend && aws s3 sync frontend/dist s3://$(aws cloudformation describe-stacks --stack-name MicroBloggingAppStack --query \"Stacks[0].Outputs[?OutputKey=='WebsiteBucketName'].OutputValue\" --output text) --delete",
+    "invalidate:cdn": "aws cloudfront create-invalidation --distribution-id $(aws cloudformation describe-stacks --stack-name MicroBloggingAppStack --query \"Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionId'].OutputValue\" --output text) --paths \"/*\"",
+    "deploy": "yarn build:backend && yarn deploy:infra && yarn deploy:frontend && yarn invalidate:cdn"
+  }
+}

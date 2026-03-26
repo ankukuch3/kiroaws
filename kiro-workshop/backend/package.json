@@ -1,0 +1,19 @@
+{
+  "name": "backend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "mkdir -p dist && cp -r src/* dist/ && find dist -name '*.ts' -delete",
+    "deploy": "cd dist && zip -r ../lambda-deployment.zip .",
+    "deploy-with-deps": "cd dist && npm install --production && zip -r ../lambda-deployment.zip ."
+  },
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.828.0",
+    "@aws-sdk/client-dynamodb": "^3.828.0",
+    "@aws-sdk/lib-dynamodb": "^3.828.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "jest": "^29.6.4"
+  }
+}
