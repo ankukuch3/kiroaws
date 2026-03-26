@@ -63,7 +63,7 @@ Implement profile picture upload, storage, and display. This involves a new Lamb
     - _Requirements: 1.1, 1.2_
 
 - [~] 5. Create `Avatar` component
-  - [ ] 5.1 Create `frontend/src/components/Avatar.tsx`
+  - [~] 5.1 Create `frontend/src/components/Avatar.tsx`
     - Accept props `avatarUrl?: string`, `displayName: string`, `size?: 'sm' | 'md' | 'lg'` (32px / 48px / 96px)
     - Render `<img>` with `src={avatarUrl}` and `alt={displayName}` when `avatarUrl` is a non-empty string
     - Include `onError` handler on `<img>` to fall back to the initial-based placeholder if the URL becomes unreachable
