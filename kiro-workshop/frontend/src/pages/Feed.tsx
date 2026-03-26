@@ -10,7 +10,8 @@ const Feed: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [nextToken, setNextToken] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'newest' | 'popular'>('newest');
-  const { token } = useAuth();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const { token, user } = useAuth();
   const observer = useRef<IntersectionObserver | null>(null);
   const lastPostElementRef = useCallback((node: HTMLDivElement | null) => {
     if (loading) return;
@@ -91,6 +92,18 @@ const Feed: React.FC = () => {
     }
   };
 
+  const handleDelete = async (postId: string) => {
+    if (!token) return;
+    try {
+      await postsApi.deletePost(postId, token);
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+    } catch (err) {
+      console.error('Error deleting post:', err);
+    } finally {
+      setConfirmDeleteId(null);
+    }
+  };
+
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSortBy(e.target.value as 'newest' | 'popular');
   };
@@ -116,61 +129,57 @@ const Feed: React.FC = () => {
           </div>
           
           {error && <div className="error-message">{error}</div>}
+
+          {confirmDeleteId && (
+            <div className="confirm-dialog-overlay">
+              <div className="confirm-dialog">
+                <p>Are you sure you want to delete this post?</p>
+                <div className="confirm-dialog-actions">
+                  <button className="delete-confirm-button" onClick={() => handleDelete(confirmDeleteId)}>Delete</button>
+                  <button className="cancel-button" onClick={() => setConfirmDeleteId(null)}>Cancel</button>
+                </div>
+              </div>
+            </div>
+          )}
           
           <div className="posts-list">
             {posts.length === 0 && !loading ? (
               <p>No posts yet. Be the first to post!</p>
             ) : (
               posts.map((post, index) => {
-                if (posts.length === index + 1) {
-                  return (
-                    <div 
-                      ref={lastPostElementRef}
-                      key={post.id} 
-                      className="post-card"
-                    >
-                      <div className="post-header">
-                        <Link to={`/profile/${post.userId}`} className="user-link">
-                          {post.user ? post.user.displayName : 'Unknown User'}
-                        </Link>
-                        <span className="post-date">{formatDate(post.createdAt)}</span>
-                      </div>
-                      <div className="post-content">{post.content}</div>
-                      <div className="post-footer">
-                        <button 
-                          onClick={() => handleLike(post.id)} 
-                          className={`like-button ${post.liked ? 'liked' : ''}`}
-                          disabled={post.liked}
-                        >
-                          {post.likesCount} {post.likesCount === 1 ? 'Like' : 'Likes'}
-                        </button>
-                        <span>{post.commentsCount} {post.commentsCount === 1 ? 'Comment' : 'Comments'}</span>
-                      </div>
+                const isOwner = user?.id === post.userId;
+                const cardContent = (
+                  <>
+                    <div className="post-header">
+                      <Link to={`/profile/${post.userId}`} className="user-link">
+                        {post.user ? post.user.displayName : 'Unknown User'}
+                      </Link>
+                      <span className="post-date">{formatDate(post.createdAt)}</span>
                     </div>
-                  );
-                } else {
-                  return (
-                    <div key={post.id} className="post-card">
-                      <div className="post-header">
-                        <Link to={`/profile/${post.userId}`} className="user-link">
-                          {post.user ? post.user.displayName : 'Unknown User'}
-                        </Link>
-                        <span className="post-date">{formatDate(post.createdAt)}</span>
-                      </div>
-                      <div className="post-content">{post.content}</div>
-                      <div className="post-footer">
-                        <button 
-                          onClick={() => handleLike(post.id)} 
-                          className={`like-button ${post.liked ? 'liked' : ''}`}
-                          disabled={post.liked}
-                        >
-                          {post.likesCount} {post.likesCount === 1 ? 'Like' : 'Likes'}
+                    <div className="post-content">{post.content}</div>
+                    <div className="post-footer">
+                      <button 
+                        onClick={() => handleLike(post.id)} 
+                        className={`like-button ${post.liked ? 'liked' : ''}`}
+                        disabled={post.liked}
+                      >
+                        {post.likesCount} {post.likesCount === 1 ? 'Like' : 'Likes'}
+                      </button>
+                      <span>{post.commentsCount} {post.commentsCount === 1 ? 'Comment' : 'Comments'}</span>
+                      {isOwner && (
+                        <button className="delete-post-button" onClick={() => setConfirmDeleteId(post.id)}>
+                          Delete
                         </button>
-                        <span>{post.commentsCount} {post.commentsCount === 1 ? 'Comment' : 'Comments'}</span>
-                      </div>
+                      )}
                     </div>
-                  );
-                }
+                  </>
+                );
+
+                return posts.length === index + 1 ? (
+                  <div ref={lastPostElementRef} key={post.id} className="post-card">{cardContent}</div>
+                ) : (
+                  <div key={post.id} className="post-card">{cardContent}</div>
+                );
               })
             )}
           </div>

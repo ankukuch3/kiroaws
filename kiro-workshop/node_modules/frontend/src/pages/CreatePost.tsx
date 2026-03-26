@@ -9,8 +9,17 @@ const CreatePost: React.FC = () => {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const { token } = useAuth();
   const navigate = useNavigate();
+
+  const handleCancel = () => {
+    if (content.trim()) {
+      setShowCancelConfirm(true);
+    } else {
+      navigate('/');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,10 +78,27 @@ const CreatePost: React.FC = () => {
           </div>
         </div>
         
-        <button type="submit" disabled={loading || !content.trim()}>
-          {loading ? 'Posting...' : 'Post'}
-        </button>
+        <div className="form-actions">
+          <button type="submit" disabled={loading || !content.trim()}>
+            {loading ? 'Posting...' : 'Post'}
+          </button>
+          <button type="button" className="cancel-button" onClick={handleCancel} disabled={loading}>
+            Cancel
+          </button>
+        </div>
       </form>
+
+      {showCancelConfirm && (
+        <div className="confirm-dialog-overlay">
+          <div className="confirm-dialog">
+            <p>Your draft will be lost. Are you sure you want to leave?</p>
+            <div className="confirm-dialog-actions">
+              <button className="delete-confirm-button" onClick={() => navigate('/')}>Leave</button>
+              <button className="cancel-button" onClick={() => setShowCancelConfirm(false)}>Keep editing</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

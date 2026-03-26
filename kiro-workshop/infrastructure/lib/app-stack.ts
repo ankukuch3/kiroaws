@@ -295,6 +295,17 @@ export class AppStack extends cdk.Stack {
       }
     });
 
+    // Lambda function for deleting posts
+    const deletePostFunction = new lambda.Function(this, 'DeletePostFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'deletePost.handler',
+      code: lambda.Code.fromAsset(getLambdaPackagePath('deletePost')),
+      environment: {
+        POSTS_TABLE: this.postsTable.tableName,
+        USERS_TABLE: this.usersTable.tableName
+      }
+    });
+
 
 
     // Grant permissions to Lambda functions
@@ -317,6 +328,8 @@ export class AppStack extends cdk.Stack {
     this.postsTable.grantReadData(getPostsFunction);
     this.postsTable.grantReadWriteData(likePostFunction);
     this.likesTable.grantReadWriteData(likePostFunction);
+    this.usersTable.grantReadData(deletePostFunction);
+    this.postsTable.grantReadWriteData(deletePostFunction);
 
     // API Gateway endpoints
     const auth = this.api.root.addResource('auth');
@@ -349,6 +362,7 @@ export class AppStack extends cdk.Stack {
     userPosts.addMethod('GET', new apigateway.LambdaIntegration(getPostsFunction));
 
     const postId = posts.addResource('{postId}');
+    postId.addMethod('DELETE', new apigateway.LambdaIntegration(deletePostFunction));
     const likePost = postId.addResource('like');
     likePost.addMethod('POST', new apigateway.LambdaIntegration(likePostFunction));
 
